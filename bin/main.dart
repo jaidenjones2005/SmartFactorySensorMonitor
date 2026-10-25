@@ -18,7 +18,7 @@ Stream<double> temperatureStream() async* {
   }
 }
 
-// Phase 3: Central dispatcher
+// Phase 3 & 4: Central dispatcher and error handling
 Future<void> main() async {
   print('=== SmartFactory Sensor Monitor ===');
 
@@ -34,29 +34,54 @@ Future<void> main() async {
   // Create central StreamController
   final controller = StreamController<double>();
 
-  // Listen for temperature readings
-  controller.stream.listen((reading) {
-    if (reading > 35.0) {
-      double fahrenheit = reading * 1.8 + 32;
+  // Listen for readings and errors
+  controller.stream.listen(
+        (reading) {
+      if (reading > 35.0) {
+        double fahrenheit = reading * 1.8 + 32;
 
-      print(
-        'WARNING: High Temperature! '
-            '${reading.toStringAsFixed(1)}°C / '
-            '${fahrenheit.toStringAsFixed(1)}°F',
-      );
-    } else {
-      print(
-        'Normal Temperature: ${reading.toStringAsFixed(1)}°C',
-      );
-    }
-  });
+        print(
+          'WARNING: High Temperature! '
+              '${reading.toStringAsFixed(1)}°C / '
+              '${fahrenheit.toStringAsFixed(1)}°F',
+        );
+      } else {
+        print(
+          'Normal Temperature: ${reading.toStringAsFixed(1)}°C',
+        );
+      }
+    },
+
+    // Handle sensor malfunction
+    onError: (error) {
+      print('ALERT: Pipeline caught an error -> $error');
+    },
+
+    // Runs when stream closes
+    onDone: () {
+      print('Sensor pipeline closed.');
+    },
+
+    cancelOnError: false,
+  );
 
   // Dispatch readings through controller
+  int counter = 0;
+
   await for (double reading in temperatureStream()) {
-    controller.add(reading);
+    counter++;
+
+    // Simulate malfunction on fourth reading
+    if (counter == 4) {
+      controller.addError(
+        Exception('Sensor Malfunction: Signal Lost'),
+      );
+    } else {
+      controller.add(reading);
+    }
   }
 
-  // Close controller after all readings
+  // Close controller after dispatching
   await controller.close();
 
   print('\nTemperature monitoring complete!');

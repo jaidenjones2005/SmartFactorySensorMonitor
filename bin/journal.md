@@ -32,3 +32,15 @@ Registering the listener before dispatching readings is important because it ens
 
 I also closed the controller after all readings were dispatched to release resources and allow the program to finish cleanly.
 
+## Phase 4: Fault Tolerance (Error Handling)
+
+In Phase 4, I added error handling to the SmartFactory Sensor Monitor by simulating a sensor malfunction during the fourth temperature reading.
+
+I used controller.addError() to send an error event through the stream instead of a normal temperature reading.
+
+The onError callback caught the malfunction and displayed an alert message without crashing the program. The stream continued processing the remaining readings because cancelOnError was set to false.
+
+A try-catch block is generally used to catch exceptions thrown during synchronous execution or within awaited asynchronous operations. In comparison, the onError callback handles error events delivered asynchronously through a stream subscription.
+
+I also added an onDone callback to confirm that the stream closed successfully after all readings were processed.
+
