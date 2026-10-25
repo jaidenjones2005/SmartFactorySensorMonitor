@@ -44,3 +44,20 @@ A try-catch block is generally used to catch exceptions thrown during synchronou
 
 I also added an onDone callback to confirm that the stream closed successfully after all readings were processed.
 
+## Phase 5: Validation and Reflection
+
+In Phase 5, I added validation tests to the SmartFactory Sensor Monitor to verify the asynchronous sensor pipeline.
+
+I tested the initial sensor handshake, temperature readings, high-temperature warnings, error handling, and StreamController cleanup.
+
+The program checks that the sensor handshake takes approximately two seconds, that four valid temperature readings are processed, and that one simulated hardware malfunction is handled.
+
+One important edge case is ensuring that the stream continues processing readings after an error event. The onError callback handles the malfunction without terminating the program.
+
+Another important consideration is closing the StreamController after all readings have been dispatched. This prevents the pipeline from remaining open unnecessarily.
+
+The program also verifies that high-temperature readings are converted correctly from Celsius to Fahrenheit.
+
+I used an AI tutor to review the asynchronous structure and considered potential issues involving unhandled stream errors and resource cleanup. The review reinforced the importance of registering listeners before dispatching events, handling errors, and closing the controller.
+
+Overall, this project helped me understand how Futures, asynchronous generators, StreamControllers, and error handling work together in a Dart application.

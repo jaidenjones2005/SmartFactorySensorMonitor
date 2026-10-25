@@ -13,31 +13,49 @@ Stream<double> temperatureStream() async* {
 
   for (double temperature in temperatures) {
     await Future.delayed(const Duration(seconds: 1));
-
     yield temperature;
   }
 }
 
-// Phase 3 & 4: Central dispatcher and error handling
+// Phases 3-5: Controller, error handling, and validation
 Future<void> main() async {
   print('=== SmartFactory Sensor Monitor ===');
-
   print('Connecting to sensor...');
 
+  final stopwatch = Stopwatch()..start();
+
   String metadata = await fetchSensorMetadata();
+
+  stopwatch.stop();
 
   print(metadata);
   print('Sensor initialization complete!');
 
+  // Test 1: Handshake delay
+  print('\n=== Test 1: Sensor Handshake ===');
+
+  if (stopwatch.elapsedMilliseconds >= 1900) {
+    print('PASS: Sensor handshake completed after the delay.');
+  } else {
+    print('FAIL: Sensor handshake completed too quickly.');
+  }
+
   print('\n=== Live Temperature Readings ===');
 
-  // Create central StreamController
   final controller = StreamController<double>();
+
+  int successfulReadings = 0;
+  int errorCount = 0;
+  int warningCount = 0;
 
   // Listen for readings and errors
   controller.stream.listen(
         (reading) {
+      successfulReadings++;
+
       if (reading > 35.0) {
+        warningCount++;
+
         double fahrenheit = reading * 1.8 + 32;
 
         print(
@@ -51,27 +69,22 @@ Future<void> main() async {
         );
       }
     },
-
-    // Handle sensor malfunction
     onError: (error) {
+      errorCount++;
       print('ALERT: Pipeline caught an error -> $error');
     },
-
-    // Runs when stream closes
     onDone: () {
       print('Sensor pipeline closed.');
     },
-
     cancelOnError: false,
   );
 
-  // Dispatch readings through controller
+  // Dispatch readings
   int counter = 0;
 
   await for (double reading in temperatureStream()) {
     counter++;
 
-    // Simulate malfunction on fourth reading
     if (counter == 4) {
       controller.addError(
         Exception('Sensor Malfunction: Signal Lost'),
@@ -81,8 +94,43 @@ Future<void> main() async {
     }
   }
 
-  // Close controller after dispatching
   await controller.close();
 
-  print('\nTemperature monitoring complete!');
+  // Test 2: Successful readings
+  print('\n=== Test 2: Temperature Readings ===');
+
+  if (successfulReadings == 4) {
+    print('PASS: Four temperature readings processed.');
+  } else {
+    print('FAIL: Unexpected reading count.');
+  }
+
+  // Test 3: High-temperature warnings
+  print('\n=== Test 3: Temperature Warnings ===');
+
+  if (warningCount == 1) {
+    print('PASS: High-temperature warning triggered.');
+  } else {
+    print('FAIL: Incorrect warning count.');
+  }
+
+  // Test 4: Error handling
+  print('\n=== Test 4: Error Handling ===');
+
+  if (errorCount == 1) {
+    print('PASS: Sensor malfunction handled successfully.');
+  } else {
+    print('FAIL: Error handling test failed.');
+  }
+
+  // Test 5: Pipeline completion
+  print('\n=== Test 5: Pipeline Completion ===');
+
+  if (controller.isClosed) {
+    print('PASS: StreamController closed successfully.');
+  } else {
+    print('FAIL: StreamController remains open.');
+  }
+
+  print('\n=== Phase 5 Complete ===');
 }
