@@ -20,3 +20,15 @@ The yield keyword differs from return because yield sends multiple values over t
 
 This phase demonstrated how asynchronous streams can process continuous sensor readings without waiting for all the data to become available at once.
 
+## Phase 3: Central Dispatcher (StreamController)
+
+In Phase 3, I modified the SmartFactory Sensor Monitor to use a StreamController as a central dispatcher for temperature readings.
+
+Instead of processing the readings directly inside the await for loop, I now send each reading into the controller using controller.add(). The controller's stream listener processes the readings and displays normal temperatures or high-temperature warnings.
+
+A StreamController provides more control over how events are added and distributed compared to a direct async generator. It allows the program to manage incoming data through a central pipeline.
+
+Registering the listener before dispatching readings is important because it ensures the program is ready to receive and process events as they arrive.
+
+I also closed the controller after all readings were dispatched to release resources and allow the program to finish cleanly.
+

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+// Phase 1: Sensor handshake
 Future<String> fetchSensorMetadata() async {
   await Future.delayed(const Duration(seconds: 2));
 
@@ -15,6 +18,7 @@ Stream<double> temperatureStream() async* {
   }
 }
 
+// Phase 3: Central dispatcher
 Future<void> main() async {
   print('=== SmartFactory Sensor Monitor ===');
 
@@ -27,7 +31,11 @@ Future<void> main() async {
 
   print('\n=== Live Temperature Readings ===');
 
-  await for (double reading in temperatureStream()) {
+  // Create central StreamController
+  final controller = StreamController<double>();
+
+  // Listen for temperature readings
+  controller.stream.listen((reading) {
     if (reading > 35.0) {
       double fahrenheit = reading * 1.8 + 32;
 
@@ -37,9 +45,19 @@ Future<void> main() async {
             '${fahrenheit.toStringAsFixed(1)}°F',
       );
     } else {
-      print('Normal Temperature: ${reading.toStringAsFixed(1)}°C');
+      print(
+        'Normal Temperature: ${reading.toStringAsFixed(1)}°C',
+      );
     }
+  });
+
+  // Dispatch readings through controller
+  await for (double reading in temperatureStream()) {
+    controller.add(reading);
   }
+
+  // Close controller after all readings
+  await controller.close();
 
   print('\nTemperature monitoring complete!');
 }
